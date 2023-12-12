@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration>
+	<timestamp key="BY_DATE" datePattern="yyyy-MM-dd"/>
+	<!-- 로그형식설정 -->
+	<property name="LOG_FORMAT" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-3level %logger{5} - %msg %n"/>
+
+	<!--level은 TRACE > DEBUG > INFO > WARN > ERROR > OFF -->
+	<logger name="jdbc" level="OFF"/>
+	<logger name="jdbc.sqlonly" level="OFF"/>
+	<logger name="jdbc.sqltiming" level="DEBUG"/>
+	<logger name="jdbc.audit" level="OFF"/>
+	<logger name="jdbc.resultset" level="OFF"/>
+	<logger name="jdbc.resulttable" level="OFF"/>
+	<logger name="jdbc.connection" level="OFF"/>
+
+
+	<appender name="LOG_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>${LOG_FORMAT}</pattern>
+		</encoder>
+	</appender>
+
+
+
+
+	<!-- 로그파일경로 -->
+	<property name="LOG_DIR_LOCAL" value="D:/Develop_sample/logs" />
+	<!-- 로그파일설정 -->
+	<appender name="LOG_FILE_LOCAL" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${LOG_DIR_LOCAL}/practice.log</file>
+		<encoder>
+	    	<pattern>[%d{yyyy-MM-dd HH:mm:ss}:%-3relative][%thread] %-5level %logger{35} - %msg%n</pattern>
+	  	</encoder>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+	    	<!-- .gz,.zip 등을 넣으면 자동 일자별 로그파일 압축 -->
+	    	<fileNamePattern>${LOG_DIR_LOCAL}/practice.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+	    	<timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+	    		<maxFileSize>100MB</maxFileSize>
+	    	</timeBasedFileNamingAndTriggeringPolicy>
+	    	<!-- 일자별 로그파일 최대 보관주기(~일), 해당 설정일 이상된 파일은 자동으로 제거-->
+	    	<maxHistory>30</maxHistory>
+	  	</rollingPolicy>
+	</appender>
+
+	<springProfile name="local">
+		<root level="INFO">
+			<appender-ref ref="LOG_CONSOLE" />
+			<!-- <appender-ref ref="LOG_FILE_LOCAL" /> -->
+		</root>
+	</springProfile>
+
+
+
+
+	<!-- 로그파일경로 local -->
+	<property name="LOG_DIR" value="D:/Develop/logs" />
+	<!-- 로그파일설정 -->
+	<appender name="LOG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${LOG_DIR}/practice.log</file>
+		<encoder>
+	    	<pattern>[%d{yyyy-MM-dd HH:mm:ss}:%-3relative][%thread] %-5level %logger{35} - %msg%n</pattern>
+	  	</encoder>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+	    	<!-- .gz,.zip 등을 넣으면 자동 일자별 로그파일 압축 -->
+	    	<fileNamePattern>${LOG_DIR}/tjmedia_cms.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+	    	<timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+	    		<maxFileSize>100MB</maxFileSize>
+	    	</timeBasedFileNamingAndTriggeringPolicy>
+	    	<!-- 일자별 로그파일 최대 보관주기(~일), 해당 설정일 이상된 파일은 자동으로 제거-->
+	    	<maxHistory>30</maxHistory>
+	  	</rollingPolicy>
+	</appender>
+
+	<springProfile name="!local">
+		<root level="INFO">
+			<appender-ref ref="LOG_CONSOLE"/>
+			<appender-ref ref="LOG_FILE" />
+		</root>
+	</springProfile>
+
+</configuration>
