@@ -12,7 +12,7 @@ import io.jsonwebtoken.Claims;
 public class SessionUtil {
 
 	@Value("${application.jwt.header-key}")
-	private String jwtHeaderKey;
+	private String JWT_HEADER_KEY;
 
 	@Autowired
 	private JwtUtil jwtUtil;
@@ -21,8 +21,16 @@ public class SessionUtil {
 		return String.valueOf(this.getClaims().get(Const.USER_CD));
 	}
 
+	public String getUserNm() {
+		return String.valueOf(this.getClaims().get(Const.USER_NM));
+	}
+
+	public String getIpAddress() {
+		return String.valueOf(this.getClaims().get(Const.IP_ADDRESS));
+	}
+
 	private Claims getClaims() {
-		return jwtUtil.getClaimsFromToken(CommonUtil.getRequest().getHeader(jwtHeaderKey));
+		return jwtUtil.getClaims();
 	}
 
 }

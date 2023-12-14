@@ -1,0 +1,92 @@
+@charset "UTF-8";
+
+html,
+body,
+pre,
+button,
+select,
+textarea,
+[type='button'],
+[type='submit'],
+[type='text'],
+[type='password'],
+[type='search'],
+[type='email'],
+[type='url'],
+[type='number'],
+[type='tel'],
+[type='file'],
+[type='date'],
+[type='time'] {
+		margin: 0;
+		padding: 0;
+		border: 0;
+		font-size: 14px;
+		font-family: 'notokr', sans-serif;
+		/* font-family: 'Noto Sans CJKR', sans-serif !important; */
+		color: #000000;
+		font-style:normal;
+		line-height: 100%;
+		vertical-align: baseline;
+		letter-spacing: -.5px;
+		-webkit-text-size-adjust : none;
+		/* 크롬, 사파리, 오페라 신버전 */
+		-ms-text-size-adjust : none;
+		/* IE */
+		-moz-text-size-adjust : none;
+		/* 파이어폭스 */
+		-o-text-size-adjust : none;
+		/* 오페라 구버전 */
+}
+
+button:focus,
+[type='button']:focus,
+[type='submit']:focus {
+	outline-width: 1px;
+	outline-style: dotted;
+}
+
+label {
+	cursor: pointer;
+}
+
+
+html, body{
+	height: 100%;
+	font-size: 62.5%;
+}
+.wrap{
+	display: flex;
+	-ms-display: flexbox;
+	display: -moz-box;
+	display: -ms-flexbox;
+	display: -webkit-flex;
+	flex-direction: column;
+	/*min-width: 152rem;*/
+	/* overflow-y: scroll; */
+	/* overflow: auto; */
+	/*min-height: 88rem;*/
+	height: 100%;
+	font-size: 62.5%;
+}
+div{
+	font-size: 14px;
+}
+
+a {
+	text-decoration: none !important;
+	cursor: pointer !important;
+}
+
+span, label, button, input[type=checkbox], input[type=radio] {
+	outline: none !important;
+}
+
+input[type='text'] + input[type='text'],
+select + input[type='text'],
+select + select,
+button,
+[type='button'] {
+	margin-left: 0.5rem;
+}
+

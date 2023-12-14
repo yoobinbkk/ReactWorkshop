@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.base.react.mapper.system.code.CodeMapper">
+	
+	<sql id="codeMst"> 
+		FROM(
+			SELECT CM.MST_CD
+				, MAX(CM.USE_YN) USE_YN
+				, MAX(CM.REG_USER_CD) REG_USER_CD
+				, MAX(CM.REG_DT) REG_DT
+				, MAX(CM.UPD_USER_CD) UPD_USER_CD
+				, MAX(CM.UPD_DT) UPD_DT
+				, MAX(CMD.LANG_CD) LANG_CD
+				, MAX(CMD.MST_CD_NM) MST_CD_NM
+				, MAX(CMD.MST_CD_DESC) MST_CD_DESC
+			FROM CODE_MST CM
+			LEFT JOIN CODE_MST_DTL CMD ON (CM.MST_CD = CMD.MST_CD AND CMD.DEL_YN <![CDATA[<>]]> 'Y' AND CMD.LANG_CD = 'KO')
+			WHERE CM.DEL_YN <![CDATA[<>]]> 'Y'
+			GROUP BY CM.MST_CD
+		) CODE_TBL
+		WHERE 1=1
+		<if test="keyword != null and keyword != ''">
+			AND TRIM(UPPER(CODE_TBL.MST_CD_NM)) LIKE '%' || TRIM(UPPER(#{keyword})) || '%'
+		</if>
+		<if test="useYn != null and useYn != ''">
+			AND CODE_TBL.USE_YN = #{useYn}
+		</if>
+	</sql>
+	
+	<select id="getCodeMstListCnt" resultType="java.lang.Integer">
+		/* CodeMapper.getCodeMstListCnt */
+		SELECT COUNT(1)
+		<include refid="codeMst" />
+	</select>
+	
+	<select id="getCodeMstList" resultType="ResCodeDTO">
+		/* CodeMapper.getCodeMstList */
+		SELECT * FROM 
+		( 
+			SELECT ROW_NUMBER() OVER(ORDER BY CODE_TBL.REG_DT DESC ) AS ROW_NUM
+				, CODE_TBL.MST_CD
+				, CODE_TBL.USE_YN
+				, CODE_TBL.REG_USER_CD
+				, CODE_TBL.REG_DT
+				, CODE_TBL.UPD_USER_CD
+				, CODE_TBL.UPD_DT
+				, CODE_TBL.LANG_CD
+				, CODE_TBL.MST_CD_NM
+				, CODE_TBL.MST_CD_DESC
+				, (SELECT COUNT(*) FROM CODE_SUB WHERE MST_CD = CODE_TBL.MST_CD AND DEL_YN <![CDATA[<>]]> 'Y') SUB_CODE_CNT
+			<include refid="codeMst" />
+		) TBL
+		WHERE 1=1
+		AND TBL.ROW_NUM BETWEEN #{startRownum} AND #{endRownum}
+		ORDER BY TBL.ROW_NUM ASC
+	</select>
+	
+	<select id="getCodeMstDetail" resultType="ResCodeDTO">
+		/* CodeMapper.getCodeMstDetail */
+		SELECT CM.MST_CD
+			, CM.USE_YN
+			, CM.REG_USER_CD
+			, CM.REG_DT
+			, CM.UPD_USER_CD
+			, CM.UPD_DT
+			, CMD.LANG_CD
+			, CMD.MST_CD_NM
+			, CMD.MST_CD_DESC
+		FROM CODE_MST CM
+		LEFT JOIN CODE_MST_DTL CMD ON (CM.MST_CD = CMD.MST_CD AND CMD.LANG_CD = 'KO')
+		WHERE CM.MST_CD = #{mstCd}
+	</select>
+	
+	<select id="getCodeMstLangList" resultType="LangDTO">
+		/* CodeMapper.getCodeMstLangList */
+		SELECT LANG_TBL.LANG_CD LANG_CD
+				, CODE_LANG.LANG_NM LANG_NM
+				, LANG_TBL.LANG_NM LANG_CD_DESC
+		FROM (
+			SELECT LM.LANG_CD
+			, MAX(LD.LANG_NM) LANG_NM
+			FROM LANG_MST LM
+			JOIN LANG_DTL LD ON (LM.LANG_CD = LD.LANG_CD AND LD.DEL_YN <![CDATA[<>]]> 'Y' AND LD.USE_YN <![CDATA[<>]]> 'N')
+			WHERE LM.DEL_YN <![CDATA[<>]]> 'Y' AND LM.USE_YN <![CDATA[<>]]> 'N'
+			GROUP BY LM.LANG_CD
+		) LANG_TBL LEFT JOIN (
+			SELECT CMD.LANG_CD LANG_CD
+				, CMD.MST_CD_NM LANG_NM
+			FROM CODE_MST CM
+			LEFT JOIN CODE_MST_DTL CMD ON (CM.MST_CD = CMD.MST_CD)
+			WHERE CM.MST_CD = #{mstCd}
+		) CODE_LANG ON (LANG_TBL.LANG_CD = CODE_LANG.LANG_CD)
+	</select>
+	
+	<insert id="mergeIntoCodeMst">
+		/* CodeMapper.mergeIntoCodeMst */
+		WITH UPSERT AS(
+		    UPDATE CODE_MST SET
+		        USE_YN = #{useYn},
+		        DEL_YN = 'N',
+				UPD_USER_CD = 'TEST',
+				UPD_DT = NOW()
+		    WHERE MST_CD = #{mstCd} RETURNING *
+		)
+		INSERT
+		INTO CODE_MST (MST_CD, USE_YN, DEL_YN, REG_USER_CD, REG_DT, UPD_USER_CD, UPD_DT)
+		SELECT #{mstCd},
+		       #{useYn},
+		       'N',
+		       'TEST',
+		       NOW(),
+		       'TEST',
+		       NOW()
+		WHERE NOT EXISTS(SELECT  * FROM UPSERT);
+	</insert>
+	
+	<insert id="mergeIntoCodeMstDtl">
+		/* CodeMapper.mergeIntoCodeMstDtl */
+		WITH UPSERT AS(
+		    UPDATE CODE_MST_DTL SET
+		    	MST_CD_NM = #{mstCdNm},
+		    	MST_CD_DESC = #{mstCdDesc},
+		        USE_YN = #{useYn},
+				UPD_USER_CD = 'TEST',
+				UPD_DT = NOW()
+		    WHERE MST_CD = #{mstCd} AND LANG_CD = #{langCd} RETURNING *
+		)
+		INSERT
+		INTO CODE_MST_DTL (MST_CD, LANG_CD, MST_CD_NM, MST_CD_DESC, USE_YN, DEL_YN, REG_USER_CD, REG_DT, UPD_USER_CD, UPD_DT)
+		SELECT #{mstCd},
+			   #{langCd},
+		       #{mstCdNm},
+		       #{mstCdDesc},
+		       #{useYn},
+		       'N',
+		       'TEST',
+		       NOW(),
+		       'TEST',
+		       NOW()
+		WHERE NOT EXISTS(SELECT  * FROM UPSERT);
+	</insert>
+	
+	<update id="updateCodeMst">
+		/* CodeMapper.updateCodeMst */
+		UPDATE CODE_MST 
+		SET 
+		<if test="delYn != null and delYn != ''">
+			DEL_YN = #{delYn}
+		</if>
+		<if test="useYn != null and useYn != ''">
+			USE_YN = #{useYn}
+		</if>
+		WHERE MST_CD IN (
+		<foreach collection="arrMstCd" item="mstCd" separator=",">
+			#{mstCd}
+		</foreach>
+		)
+	</update>
+	
+	<sql id="codeSub"> 
+		FROM(
+			SELECT CS.MST_CD
+				, CS.SUB_CD
+				, MAX(CS.USE_YN) USE_YN
+				, MAX(CS.REG_USER_CD) REG_USER_CD
+				, MAX(CS.REG_DT) REG_DT
+				, MAX(CS.UPD_USER_CD) UPD_USER_CD
+				, MAX(CS.UPD_DT) UPD_DT
+				, MAX(CSD.LANG_CD) LANG_CD
+				, MAX(CSD.SUB_CD_NM) SUB_CD_NM
+				, MAX(CSD.SUB_CD_DESC) SUB_CD_DESC
+			FROM CODE_SUB CS
+			LEFT JOIN CODE_SUB_DTL CSD 
+			ON (CS.MST_CD = CSD.MST_CD AND CS.SUB_CD = CSD.SUB_CD AND CSD.DEL_YN <![CDATA[<>]]> 'Y' AND CSD.LANG_CD = 'KO')
+			WHERE CS.DEL_YN <![CDATA[<>]]> 'Y'
+			GROUP BY CS.MST_CD, CS.SUB_CD
+		) CODE_SUB_TBL
+		WHERE 1=1
+		<if test="mstCd != null and mstCd != ''">
+			AND CODE_SUB_TBL.MST_CD = #{mstCd}
+		</if>
+	</sql>
+	
+	<select id="getCodeSubListCnt" resultType="java.lang.Integer">
+		/* CodeMapper.getCodeSubListCnt */
+		SELECT COUNT(1)
+		<include refid="codeSub" />
+	</select>
+	
+	<select id="getCodeSubList" resultType="ResCodeDTO">
+		/* CodeMapper.getCodeSubList */
+		SELECT * FROM 
+		( 
+			SELECT ROW_NUMBER() OVER(ORDER BY CODE_SUB_TBL.REG_DT DESC ) AS ROW_NUM
+				, CODE_SUB_TBL.MST_CD
+				, CODE_SUB_TBL.SUB_CD
+				, CODE_SUB_TBL.USE_YN
+				, CODE_SUB_TBL.REG_USER_CD
+				, CODE_SUB_TBL.REG_DT
+				, CODE_SUB_TBL.UPD_USER_CD
+				, CODE_SUB_TBL.UPD_DT
+				, CODE_SUB_TBL.LANG_CD
+				, CODE_SUB_TBL.SUB_CD_NM
+				, CODE_SUB_TBL.SUB_CD_DESC
+			<include refid="codeSub" />
+		) TBL
+		WHERE 1=1
+		AND TBL.ROW_NUM BETWEEN #{startRownum} AND #{endRownum}
+		ORDER BY TBL.ROW_NUM ASC
+	</select>
+	
+	<insert id="mergeIntoCodeSub">
+		/* CodeMapper.mergeIntoCodeSub */
+		WITH UPSERT AS(
+		    UPDATE CODE_SUB SET
+		        USE_YN = #{useYn},
+		        DEL_YN = 'Y',
+				UPD_USER_CD = 'TEST',
+				UPD_DT = NOW()
+		    WHERE MST_CD = #{mstCd} AND SUB_CD = #{subCd} RETURNING *
+		)
+		INSERT
+		INTO CODE_SUB (MST_CD, SUB_CD, USE_YN, DEL_YN, REG_USER_CD, REG_DT, UPD_USER_CD, UPD_DT)
+		SELECT #{mstCd},
+			   #{subCd},
+		       #{useYn},
+		       'N',
+		       'TEST',
+		       NOW(),
+		       'TEST',
+		       NOW()
+		WHERE NOT EXISTS(SELECT  * FROM UPSERT);
+	</insert>
+
+	<insert id="mergeIntoCodeSubDtl">
+		/* CodeMapper.mergeIntoCodeSubDtl */
+		WITH UPSERT AS(
+		    UPDATE CODE_SUB_DTL SET
+		    	SUB_CD_NM = #{subCdNm},
+		    	SUB_CD_DESC = #{subCdDesc},
+		        USE_YN = #{useYn},
+				UPD_USER_CD = 'TEST',
+				UPD_DT = NOW()
+		    WHERE MST_CD = #{mstCd} AND SUB_CD = #{subCd} AND LANG_CD = #{langCd} RETURNING *
+		)
+		INSERT
+		INTO CODE_SUB_DTL (MST_CD, SUB_CD, LANG_CD, SUB_CD_NM, SUB_CD_DESC, USE_YN, DEL_YN, REG_USER_CD, REG_DT, UPD_USER_CD, UPD_DT)
+		SELECT #{mstCd},
+			   #{subCd},
+			   #{langCd},
+		       #{subCdNm},
+		       #{subCdDesc},
+		       #{useYn},
+		       'N',
+		       'TEST',
+		       NOW(),
+		       'TEST',
+		       NOW()
+		WHERE NOT EXISTS(SELECT  * FROM UPSERT);
+	</insert>
+	
+	<select id="getCodeSubDetail" resultType="ResCodeDTO">
+		/* CodeMapper.getCodeSubDetail */
+		SELECT CS.MST_CD
+			, CS.SUB_CD
+			, CS.USE_YN
+			, CS.REG_USER_CD
+			, CS.REG_DT
+			, CS.UPD_USER_CD
+			, CS.UPD_DT
+			, CSD.LANG_CD
+			, CSD.SUB_CD_NM
+			, CSD.SUB_CD_DESC
+		FROM CODE_SUB CS
+		LEFT JOIN CODE_SUB_DTL CSD 
+		ON (CS.MST_CD = CSD.MST_CD AND CS.SUB_CD = CSD.SUB_CD AND CSD.LANG_CD = 'KO')
+		WHERE CS.MST_CD = #{mstCd} AND CS.SUB_CD = #{subCd}
+	</select>
+	
+	<select id="getCodeSubLangList" resultType="LangDTO">
+		SELECT LANG_TBL.LANG_CD LANG_CD
+				, CODE_LANG.LANG_NM LANG_NM
+				, LANG_TBL.LANG_NM LANG_CD_DESC
+		FROM (
+			SELECT LM.LANG_CD
+			, MAX(LD.LANG_NM) LANG_NM
+			FROM LANG_MST LM
+			JOIN LANG_DTL LD ON (LM.LANG_CD = LD.LANG_CD AND LD.DEL_YN <![CDATA[<>]]> 'Y' AND LD.USE_YN <![CDATA[<>]]> 'N')
+			WHERE LM.DEL_YN <![CDATA[<>]]> 'Y' AND LM.USE_YN <![CDATA[<>]]> 'N'
+			GROUP BY LM.LANG_CD
+		) LANG_TBL LEFT JOIN (
+			SELECT CSD.LANG_CD  LANG_CD
+				, CSD.SUB_CD_NM LANG_NM
+			FROM CODE_SUB CS
+			LEFT JOIN CODE_SUB_DTL CSD 
+			ON (CS.MST_CD = CSD.MST_CD AND CS.SUB_CD = CSD.SUB_CD)
+			WHERE CS.MST_CD = #{mstCd} AND CS.SUB_CD = #{subCd}
+		) CODE_LANG ON (LANG_TBL.LANG_CD = CODE_LANG.LANG_CD)
+	</select>
+	
+	<update id="updateCodeSub">
+		/* CodeMapper.updateCodeSub */
+		UPDATE CODE_SUB
+		SET 
+		<if test="delYn != null and delYn != ''">
+			DEL_YN = #{delYn}
+		</if>
+		<if test="useYn != null and useYn != ''">
+			USE_YN = #{useYn}
+		</if>
+		WHERE MST_CD = #{mstCd}
+		AND SUB_CD IN (
+		<foreach collection="arrSubCd" item="subCd" separator=",">
+			#{subCd}
+		</foreach>
+		)
+	</update>
+	
+	<select id="getLangCdList" resultType="LangDTO">
+		/* CodeMapper.getLangCdList */
+		SELECT LM.LANG_CD
+			, MAX(LD.LANG_NM) LANG_CD_DESC
+		FROM LANG_MST LM
+		JOIN LANG_DTL LD ON (LM.LANG_CD = LD.LANG_CD AND LD.DEL_YN <![CDATA[<>]]> 'Y' AND LD.USE_YN <![CDATA[<>]]> 'N')
+		WHERE LM.DEL_YN <![CDATA[<>]]> 'Y' AND LM.USE_YN <![CDATA[<>]]> 'N'
+		GROUP BY LM.LANG_CD
+	</select>
+	
+</mapper>

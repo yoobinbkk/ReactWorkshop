@@ -49,11 +49,18 @@
         </dependency>
 
 		<!-- MSSQL -->
-		<dependency>
+		<!-- <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>
             <scope>runtime</scope>
-        </dependency>
+        </dependency> -->
+
+        <!-- POSTGRES -->
+        <dependency>
+		    <groupId>org.postgresql</groupId>
+		    <artifactId>postgresql</artifactId>
+		    <scope>runtime</scope>
+		</dependency>
 
         <!-- Mybatis -->
         <dependency>

@@ -1,0 +1,20 @@
+@charset 'utf-8';
+
+@import url(../css/reset.css);
+@import url(../css/font.css);
+
+@import './helper/mixin';
+@import 'common';
+@import 'ui-style';
+
+.App {
+	height: 100%;
+}
+
+#root {
+	height: 100%;
+}
+
+body {
+	background: #f6f7fb;
+}

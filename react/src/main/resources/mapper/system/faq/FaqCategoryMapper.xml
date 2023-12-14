@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.base.react.mapper.system.faq.FaqCategoryMapper">
+
+	<select id="getFaqCategoryList" resultType="ResFaqCategoryDTO">
+	/* FaqCategoryMapper.getFaqCategoryList */
+	
+		WITH RECURSIVE CATEGORY_LIST (CATEGORY_CD, UCATEGORY_CD, DEPTH, PATH, CYCLE)
+		  AS (
+		  	SELECT FCM.CATEGORY_CD
+		  		   , FCM.UCATEGORY_CD
+		  		   , 0
+		  		   , ARRAY[FCM.CATEGORY_CD::TEXT]
+		  		   , FALSE
+		  	  FROM FAQ_CATEGORY_MST FCM
+		  	 WHERE 1 = 1
+		  	   AND FCM.DEL_YN = 'N'
+		 	   UNION ALL
+		 	SELECT FCM.CATEGORY_CD
+		 		   , FCM.UCATEGORY_CD
+		 		   , CL.DEPTH + 1
+		 		   , CL.PATH || FCM.CATEGORY_CD :: TEXT
+		 		   , FCM.CATEGORY_CD = ANY(CL.PATH)
+		 	  FROM FAQ_CATEGORY_MST FCM
+		INNER JOIN CATEGORY_LIST CL
+		        ON (FCM.UCATEGORY_CD = CL.CATEGORY_CD)
+   LEFT OUTER JOIN FAQ_CATEGORY_DTL FCD
+   				ON (
+   					FCM.CATEGORY_CD = FCD.CATEGORY_CD AND FCD.LANG_CD = 'KO'
+   				)
+   			 WHERE 1 = 1
+   			   AND FCM.DEL_YN = 'N'
+   			   AND NOT CYCLE		 	  
+		  )
+		  SELECT DISTINCT ON (CL.CATEGORY_CD)
+		  		 CL.CATEGORY_CD
+		  		 , CL.UCATEGORY_CD
+		  		 , FCD.CATEGORY_NM
+		  		 , FCD.LANG_CD
+		  		 , CL.DEPTH
+		  		 , ARRAY_TO_STRING(CL.PATH, ' -> ') AS PATH
+		    FROM CATEGORY_LIST CL
+ 			LEFT OUTER JOIN FAQ_CATEGORY_DTL FCD
+ 			  ON (CL.CATEGORY_CD = FCD.CATEGORY_CD AND FCD.LANG_CD = 'KO')
+ 		   WHERE 1 = 1
+ 		   ORDER BY CL.CATEGORY_CD, PATH;
+ 		   
+	</select>
+	
+	<select id="getFaqCategoryDetail" resultType="ResFaqCategoryDTO">
+	/* FaqCategoryMapper.getFaqCategoryDetail */
+	
+		SELECT FCM.CATEGORY_CD
+			   , FCD.CATEGORY_NM
+			   , FCM.UCATEGORY_CD
+			   , FCD.LANG_CD
+			   , FCM.NATION_CD
+			   , FCM.USE_YN
+			   , FCM.REG_USER_CD
+			   , FCM.REG_DT
+			   , FCM.UPD_USER_CD
+			   , FCM.UPD_DT
+		  FROM FAQ_CATEGORY_MST FCM
+		  LEFT OUTER JOIN FAQ_CATEGORY_DTL FCD ON FCM.CATEGORY_CD = FCD.CATEGORY_CD
+		 WHERE 1 = 1
+		   AND FCM.DEL_YN = 'N'
+		   AND FCM.CATEGORY_CD = #{categoryCd}
+	
+	</select>
+	
+	<insert id="postFaqCategoryReg">
+	/* FaqCategoryMapper.postFaqCategoryReg */
+	
+		WITH REG_FAQ AS (
+			INSERT INTO FAQ_CATEGORY_MST (
+				CATEGORY_CD
+				, NATION_CD
+				, UCATEGORY_CD
+				, USE_YN
+				, DEL_YN
+				, REG_USER_CD
+				, REG_DT
+				, UPD_USER_CD
+				, UPD_DT
+			) VALUES (
+				#{categoryCd}
+				, #{nationCd}
+				, #{ucategoryCd}
+				, #{useYn}
+				, 'N'
+				, 'KDB'
+				, NOW()
+				, 'KDB'
+				, NOW()
+			) RETURNING (
+				CATEGORY_CD
+				, UCATEGORY_CD
+			)
+		)
+		INSERT INTO FAQ_CATEGORY_DTL (
+			CATEGORY_CD
+			, LANG_CD
+			, CATEGORY_NM
+			, USE_YN
+			, DEL_YN
+			, REG_USER_CD
+			, REG_DT
+			, UPD_USER_CD
+			, UPD_DT
+		) 
+		SELECT #{categoryCd}
+			   , 'KO' AS LANG_CD
+			   , #{categoryNm} AS CATEGORY_NM
+			   , #{useYn} AS USE_YN
+			   , 'N' AS DEL_YN
+			   , 'KDB' AS REG_USER_CD
+			   , NOW() AS REG_DT
+			   , 'KDB' AS UPD_USER_CD
+			   , NOW() AS UPD_DT
+		  FROM REG_FAQ ;
+	
+	</insert> 
+	
+	<update id="putFaqCategoryMstUpd">
+	/* FaqCategoryMapper.putFaqCategoryMstUpd */
+	
+		UPDATE FAQ_CATEGORY_MST
+		   SET NATION_CD = #{nationCd}
+		       , USE_YN = #{useYn}
+		       , UPD_USER_CD = 'KDB'
+		       , UPD_DT = NOW()
+		 WHERE CATEGORY_CD = #{categoryCd}
+	
+	</update>
+	
+	<update id="putFaqCategoryDtlUpd">
+	/* FaqCategoryMapper.putFaqCategoryDtlUpd */
+	
+		UPDATE FAQ_CATEGORY_DTL
+		   SET CATEGORY_NM = #{categoryNm}
+		       , USE_YN = #{useYn}
+		       , UPD_USER_CD = 'KDB'
+		       , UPD_DT = NOW()
+		 WHERE CATEGORY_CD = #{categoryCd}
+	
+	</update>
+	
+	<update id="delFaqCategoryMstDel">
+	/* FaqCategoryMapper.delFaqCategoryMstDel */
+	
+		WITH RECURSIVE CATEGORY AS (
+			SELECT CATEGORY_CD, UCATEGORY_CD
+			  FROM FAQ_CATEGORY_MST
+			 WHERE CATEGORY_CD = #{categoryCd}
+	     UNION ALL
+	        SELECT FCM.CATEGORY_CD, FCM.UCATEGORY_CD
+	          FROM FAQ_CATEGORY_MST FCM
+	          JOIN CATEGORY CT
+	            ON FCM.UCATEGORY_CD = CT.CATEGORY_CD
+		)
+		UPDATE FAQ_CATEGORY_MST
+		   SET DEL_YN = 'Y'
+		       , UPD_USER_CD = 'KDB'
+		       , UPD_DT = NOW()
+		 WHERE CATEGORY_CD 
+		    IN (SELECT CATEGORY_CD FROM CATEGORY); 
+	
+	</update>
+	
+	<update id="delFaqCategoryDtlDel">
+	/* FaqCategoryMapper.delFaqCategoryDtlDel */
+	
+		WITH RECURSIVE CATEGORYDTL AS (
+			SELECT CATEGORY_CD, UCATEGORY_CD
+			  FROM FAQ_CATEGORY_MST
+			 WHERE CATEGORY_CD = #{categoryCd}
+		 UNION ALL
+		    SELECT FCM.CATEGORY_CD, FCM.UCATEGORY_CD
+		      FROM FAQ_CATEGORY_MST FCM
+		      JOIN CATEGORYDTL CTD
+		        ON FCM.UCATEGORY_CD = CTD.CATEGORY_CD
+		)
+		UPDATE FAQ_CATEGORY_DTL
+		   SET DEL_YN = 'Y'
+		       , UPD_USER_CD = 'KDB'
+		       , UPD_DT = NOW()
+		 WHERE CATEGORY_CD
+		    IN (SELECT CATEGORY_CD FROM CATEGORYDTL);
+		    
+	</update>
+</mapper>

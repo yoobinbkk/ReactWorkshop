@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.base.react.mapper.common.CommonMapper">
+
+	<select id="selectMenuList_temp" resultType="MenuDTO">
+	/* CommonMapper.selectMenuList_temp */
+
+		SELECT
+			MENU_CD
+			, MENU_NM
+			, PAGE_PATH
+			, URL_PATH
+			, LAYOUT_NM
+		FROM MENU_MST_TEMP
+		WHERE 1=1
+		AND DEL_YN = 'N'
+
+	</select>
+
+	<select id="selectMenuList" resultType="MenuDTO">
+	/* CommonMapper.selectMenuList */
+
+		WITH RECURSIVE MENU_LIST(MENU_CD, UMENU_CD, SORT_NO, API_URL, SYS_YN, MENU_DEPTH, MENU_PATH, NAVI_PATH, CYCLE) AS (
+			SELECT
+				MENU_CD
+				, UMENU_CD
+				, SORT_NO
+				, API_URL
+				, SYS_YN
+				, 0
+				, ARRAY[0::TEXT || 0::TEXT]
+				, '' AS MENU_PATH_NAME
+				, FALSE
+			FROM MENU_MST
+			WHERE 1=1
+			AND MENU_CD = 'MN0000'
+			AND USE_YN = 'Y'
+			AND DEL_YN = 'N'
+			UNION ALL
+			SELECT
+				MMST.MENU_CD
+				, MMST.UMENU_CD
+				, MMST.SORT_NO
+				, MMST.API_URL
+				, MMST.SYS_YN
+				, MENU_DEPTH + 1
+				, ARRAY_APPEND(MENU_PATH, (MENU_DEPTH + 1)::TEXT || MMST.SORT_NO::TEXT)
+				, CASE
+					WHEN MLIST.UMENU_CD = '/' THEN '' || MDTL.MENU_NM
+					ELSE NAVI_PATH || ' > ' || MDTL.MENU_NM
+				END
+				, MMST.MENU_CD = ANY(MENU_PATH)
+			FROM MENU_MST MMST
+			INNER JOIN MENU_LIST MLIST
+			ON (
+				MMST.UMENU_CD = MLIST.MENU_CD
+			)
+			LEFT OUTER JOIN MENU_DTL MDTL
+			ON (
+				MMST.MENU_CD = MDTL.MENU_CD
+				AND MDTL.LANG_CD = 'KO'
+			)
+			WHERE 1=1
+			AND MMST.USE_YN = 'Y'
+			AND MMST.DEL_YN = 'N'
+			AND NOT CYCLE
+		)
+		SELECT
+			MLIST.MENU_CD
+			, MLIST.UMENU_CD
+			, MLIST.API_URL
+			, MLIST.SYS_YN
+			, MLIST.MENU_DEPTH
+			, MLIST.NAVI_PATH
+			, MDTL.MENU_NM
+			, PMST.PAGE_CD
+			, PMST.PAGE_PATH
+			, PMST.URL_PATH
+			, PMST.DEFAULT_PAGE_YN
+		FROM MENU_LIST MLIST
+		LEFT OUTER JOIN MENU_DTL MDTL
+		ON (
+			MLIST.MENU_CD = MDTL.MENU_CD
+			AND MDTL.LANG_CD = 'KO'
+		)
+		LEFT OUTER JOIN PAGE_MST PMST
+		ON (
+			MLIST.MENU_CD = PMST.MENU_CD
+		)
+		WHERE 1=1
+		AND MLIST.MENU_CD <![CDATA[<>]]> 'MN0000'
+		ORDER BY MENU_PATH
+
+	</select>
+
+	<select id="selectPageList" resultType="PageDTO">
+	/* CommonMapper.selectPageList */
+
+		SELECT
+			PMST.PAGE_CD
+			, PMST.PAGE_PATH
+			, PMST.URL_PATH
+			, MMST.SYS_YN
+		FROM PAGE_MST PMST
+			 INNER JOIN MENU_MST MMST
+			 ON (
+			 	PMST.MENU_CD = MMST.MENU_CD
+			 )
+		WHERE 1=1
+		AND PMST.USE_YN = 'Y'
+		AND PMST.DEL_YN = 'N'
+		AND MMST.USE_YN = 'Y'
+		AND MMST.DEL_YN = 'N'
+
+	</select>
+
+
+
+</mapper>

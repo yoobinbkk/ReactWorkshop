@@ -7,10 +7,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.base.react.model.ResponseVO;
+import com.base.react.model.common.ReqCommonSearchDTO;
 import com.base.react.model.sample.ReqSampleDTO;
 import com.base.react.model.sample.ResSampleDTO;
 import com.base.react.service.sample.SampleService;
@@ -51,6 +51,11 @@ public class SampleController {
 		}
 
 		return ResponseEntity.ok(responseVO);
+	}
+	
+	@GetMapping("/getIngreInfoList")
+	public ResponseEntity<ResponseVO> getIngreInfoList(ReqCommonSearchDTO reqCommonSearchDTO) {
+		return ResponseEntity.ok(sampleService.getIngreInfoList(reqCommonSearchDTO));
 	}
 
 //	@GetMapping("/getSampleList")

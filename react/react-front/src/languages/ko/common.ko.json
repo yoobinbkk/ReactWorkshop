@@ -1,0 +1,12 @@
+{
+	"common": {
+		"label": {
+			"search": "검색"
+		},
+		"message": {
+			"login_required_msg": "ID / 패스워드를 입력해 주세요.",
+			"login_input_required_msg": "ID / 패스워드를 확인해 주세요.",
+			"api_error_msg": "작업 중 오류가 발생했습니다."
+		}
+	}
+}

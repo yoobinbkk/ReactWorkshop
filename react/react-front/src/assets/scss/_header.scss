@@ -1,0 +1,92 @@
+/** header */ 
+.header {
+	.header{
+		&__inner{
+			@include d-flex;
+			@include align-center;
+			position:relative;
+			height: 60px;
+			padding-left:3rem;
+			padding-right: 20px;
+			border-bottom:1px solid #eaedf3;
+			box-shadow: 0px 7px 10px #eaedf3;
+			background-color: #ffffff;
+		}
+		&-logo{
+			@include d-flex-center;
+			height:100%;
+			margin-top: 4px;
+			flex: none;
+			&__link{
+				display: inline-block;
+				font-size: 2.5rem;
+				font-weight: 700;
+				color: #2b90d9;
+				cursor: pointer;
+			}
+		}
+		&-menu{
+			//flex:1;
+			margin-left: auto;			
+			&__inner{
+				@include d-flex;
+				margin: 0 -.4rem;
+			}
+			&__item{			 
+				position: relative;	 
+				padding: 0 .4rem;
+				//box-sizing: border-box
+				&.is-active{
+					.header-menu{
+						&__link{
+							background-size: 196px 16px;
+							background-color: #edf4ff;
+						}	 
+						&__dropdown{
+							display: block
+						}
+					}
+				}
+			}
+			&__usernm{
+				line-height: 3.8rem;
+				color: #232323;
+				font-weight: 700;
+				letter-spacing: 0.1rem;
+				margin-right: 1rem;
+				.name {
+					color: #6AAFE6;
+				}
+			}
+			&__link{
+				@include d-flex-center;
+				width:37px;
+				height:37px;
+				//background-color: red;
+				background-image: url(~../images/common/header-menu_.png);
+				background-position: left center;
+				background-repeat: no-repeat;
+				background-size: 196px 16px;
+				border-radius: 100%;
+				transition: all .2s;
+				&:hover{
+					background-image: url(~../images/common/header-menu__hover_.png);
+					background-size: 196px 16px;
+					background-color: #edf4ff;
+				}
+			}
+			&__setting{
+				.header-menu__link{
+					background-position: left -125px center;
+				}
+			}
+			&__logout{
+				.header-menu__link{
+					background-position: left -170px center;
+				}
+			}
+		}
+	}
+}
+
+

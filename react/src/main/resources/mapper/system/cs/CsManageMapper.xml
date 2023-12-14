@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.base.react.mapper.system.cs.CsManageMapper">
+
+	<select id="selectCsManageList" resultType="CsManageDTO">
+	/* CsManageMapper.selectCsManageList */
+		SELECT 
+       		ROW_NUMBER() OVER(ORDER BY CCM.REG_DT) ROWNUM
+       		, CCM.NATION_CD
+       		<!-- , (SELECT NATION_NM FROM NATION_DTL ND WHERE ND.NATION_CD = CCM.NATION_CD AND ) AS NATION_CD -->
+       		, CCM.CATEGORY_CD AS LEVEL1
+       		, (SELECT CATEGORY_NM FROM CS_CATEGORY_DTL CCD WHERE CCD.CATEGORY_CD = CCM.CATEGORY_CD) AS LEVEL1_NM
+       		, CCM2.CATEGORY_CD AS LEVEL2
+       		, (SELECT CATEGORY_NM FROM CS_CATEGORY_DTL CCD WHERE CCD.CATEGORY_CD = CCM2.CATEGORY_CD) AS LEVEL2_NM
+       		, CCM3.CATEGORY_CD AS LEVEL3
+       		, (SELECT CATEGORY_NM FROM CS_CATEGORY_DTL CCD WHERE CCD.CATEGORY_CD = CCM3.CATEGORY_CD) AS LEVEL3_NM
+       		, CCM.USE_YN
+       		, CCM.DEL_YN
+       		, CCM.UPD_USER_CD 
+       		, CCM.UPD_DT 
+       		, CCM.REG_USER_CD 
+       		, CCM.REG_DT 
+		<include refid="selectCsManageListInclude" />
+	</select>
+
+	<sql id="selectCsManageListInclude">
+		FROM CS_CATEGORY_MST CCM
+       	LEFT JOIN CS_CATEGORY_MST CCM2 
+		ON (
+			CCM.CATEGORY_CD = CCM2.UCATEGORY_CD 
+       		AND CCM.DEL_YN = 'N'
+		)
+       	LEFT JOIN CS_CATEGORY_MST CCM3 
+		ON (
+			CCM2.CATEGORY_CD = CCM3.UCATEGORY_CD  
+       		AND CCM2.DEL_YN = 'N'
+		) 
+       	WHERE 1=1
+       	    AND CCM.UCATEGORY_CD = 'CS000000'
+			<if test='dateType != null and dateType != ""'>
+				<choose>
+					<when test='"U".equals(dateType)'>
+						CCM.UPD_DT BETWEEN #{startDt} and #{endDt}
+					</when>
+					<otherwise>
+						CCM.REG_DT BETWEEN #{startDt} and #{endDt}
+					</otherwise>
+				</choose>
+			</if>
+	</sql>
+
+	<select id="selectCsManageListCount" resultType="java.lang.Integer">
+	/* CsManageMapper.selectCsManageListCount */
+		SELECT COUNT(*)
+		<include refid="selectCsManageListInclude" />
+	</select>
+
+</mapper>

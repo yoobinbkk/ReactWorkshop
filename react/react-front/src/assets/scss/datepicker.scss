@@ -1,0 +1,113 @@
+@import './helper/index';
+
+.react-datepicker {
+	&-wrapper {
+		display: inline-block;
+		padding: 0;
+		border: 0;
+	}
+
+	&__year-wrapper {
+		display: flex;
+		justify-content: space-between;
+	}
+
+	&__input-container {
+		position: relative;
+		display: inline-block;
+		width: 100%;
+
+		input {
+			width: 100%;
+		//padding-left: 5rem;
+			height: 3.5rem;
+			padding: 0 1rem;
+			font-size: 1.4rem;
+			text-indent: 0;
+			line-height: 3.5rem;
+			background: #ffffff;
+			border-radius: .6rem;
+			box-sizing: border-box;
+			transition:all .2s;
+			padding-left: 4rem;
+			padding-top: 0.2rem;
+			border:0.1rem solid #d8dce2;
+			width:15rem;
+			background: #ffffff url(../images/icon/icon-calendar.png) no-repeat left 1rem top 0.8rem;
+			background-size: 16px;
+			&:hover{
+				background-image: url(../images/icon/icon-calendar__hover.png);
+			}
+
+			&:disabled {
+				background-color: #f1f1f1;
+			}
+		}
+	}
+
+	&__close-icon::after {
+		cursor: pointer;
+		background: url(../images/icon/icon-close.png) no-repeat center;
+		background-size: 10px 10px;
+		height: 10px;
+		width: 10px;
+		padding: 2px;
+		content: "";
+	}
+
+	&__header {
+		padding-top: 0.8em;
+		background-color: #f6f7fb;
+	}
+
+	&-year-header {
+		font-size: inherit;
+		height: 18px;
+	}
+
+	&__month {
+		margin: 0.4em 1em;
+	}
+
+	&__day, &__day-name, &__month-text, &__year-text {
+		width: 1.9em;
+		line-height: 1.9em;
+		margin: 0.166em;
+		color: #586376;
+	}
+
+	&__month-text {
+		width: 5rem !important;
+	}
+
+	&__year-text {
+		width: 5rem !important;
+		line-height: 3rem;
+	}
+
+	&__day--selected, 
+	&__month-text--keyboard-selected, 
+	&__year-text--selected,
+	&__day--in-selecting-range,
+	&--in-range,
+	&__day--in-range,
+	&__day--keyboard-selected {
+		color: #ffffff;
+		background-color: #2b90d9;
+
+		&:hover {
+			color: #ffffff;
+			background-color: #2b90d9;
+		}
+	}
+
+	&__current-month, &-year-header {
+		font-size: 1em;
+		color: #586376;
+	}
+
+	&__navigation {
+		line-height: 1.7em;
+		border: 0.45em solid transparent;
+	}
+}

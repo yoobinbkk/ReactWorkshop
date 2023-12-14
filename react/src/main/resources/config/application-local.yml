@@ -2,14 +2,17 @@ server:
   port: 4000
   
 spring:
+  sql:
+    init:
+      platfrom: postgres
   config:
     activate:
       on-profile: local
   datasource:
     driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
-    url: jdbc:log4jdbc:sqlserver://localhost:1433;DatabaseName=SAMPLE_DB;trustServerCertificate=true
-    username: whnho
-    password: Dnjsuddl1!
+    url: jdbc:log4jdbc:postgresql://192.168.0.12:5432/postgres
+    username: postgres
+    password: ishift7150!
   devtools:
     livereload:
       enabled: true

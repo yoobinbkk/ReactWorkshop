@@ -5,9 +5,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import com.base.react.model.Const;
 import com.base.react.model.SessionVO;
@@ -24,22 +26,23 @@ public class JwtUtil implements Serializable {
 	@Value("${application.jwt.secret-key}")
 	private String JWT_SECRET_KEY;
 
+	@Value("${application.jwt.header-key}")
+	private String JWT_HEADER_KEY;
+
 	// 서비스에서 사용
 	public String generateToken(SessionVO sessionVO) {
 
 		Map<String, Object> claims = new HashMap<String, Object>();
 
 		claims.put(Const.USER_CD, sessionVO.getUserCd());
+		claims.put(Const.USER_NM, sessionVO.getUserNm());
+		claims.put(Const.IP_ADDRESS, sessionVO.getIpAddress());
 
-		return this.generateToken(claims, sessionVO.getUserCd());
-	}
-
-	private String generateToken(Map<String, Object> claims, String subject) {
-		return this.generateToken(claims, subject, Const.JWT_EXPIRATION, JWT_SECRET_KEY);
+		return this.generateToken(claims, JWT_SECRET_KEY);
 	}
 
 	// 토큰생성
-	private String generateToken(Map<String, Object> claims, String subject, long expiration, String jwtSecretKey) {
+	private String generateToken(Map<String, Object> claims, String jwtSecretKey) {
 
 		claims = Objects.isNull(claims) ? new HashMap<String, Object>() : claims;
 
@@ -47,11 +50,11 @@ public class JwtUtil implements Serializable {
 					// 담길 정보
 					.setClaims(claims)
 					// 토큰용도
-					.setSubject(subject)
+					.setSubject(UUID.randomUUID().toString().replaceAll("-", ""))
 					// 토큰발급시간
 					.setIssuedAt(new Date(System.currentTimeMillis()))
 					// 토큰만료시간
-					.setExpiration(new Date(System.currentTimeMillis() + expiration))
+					.setExpiration(new Date(System.currentTimeMillis() + Const.JWT_EXPIRATION))
 					// 암호화알고리즘
 					.signWith(SignatureAlgorithm.HS512, jwtSecretKey)
 					// 토큰발급
@@ -59,46 +62,27 @@ public class JwtUtil implements Serializable {
 		;
 	}
 
-	// 서비스에서 사용
-	public Claims getClaimsFromToken(String jwtToken) {
-		return this.getClaimsFromToken(jwtToken, JWT_SECRET_KEY);
+	public Claims getClaims(String jwt) {
+		return this.getClaimsFromJwt(jwt, JWT_SECRET_KEY);
 	}
 
-	// 토큰으로 claims 가져오기
-	private Claims getClaimsFromToken(String jwtToken, String jwtSecretKey) {
-		return Jwts.parser().setSigningKey(jwtSecretKey).parseClaimsJws(jwtToken).getBody();
+	public Claims getClaims() {
+		return this.getClaimsFromJwt(this.getHeaderJwt(), JWT_SECRET_KEY);
 	}
 
-
-	public Boolean isExpiredToken(String jwtToken) {
-		return this.getClaimsFromToken(jwtToken).getExpiration().before(new Date());
+	public String removePrefix(String jwt) {
+		return jwt.substring(Const.JWT_PREFIX_LENGTH);
 	}
 
+	public Boolean isExpired(String jwt) {
+		return this.getClaims(jwt).getExpiration().before(new Date());
+	}
 
+	private Claims getClaimsFromJwt(String jwt, String jwtSecretKey) {
+		return Jwts.parser().setSigningKey(jwtSecretKey).parseClaimsJws(jwt).getBody();
+	}
 
-
-
-//	public String doGenerateToken(String subject, Map<String, Object> claims, long jwtTokenValidity, String secret) {
-//
-//
-//        return Jwts.builder()
-//                    .setClaims(claims)
-//                    .setSubject(subject)
-//                    .setIssuedAt(new Date(System.currentTimeMillis()))
-//                    .setExpiration(new Date(System.currentTimeMillis() + jwtTokenValidity * 1000))
-//                    .signWith(SignatureAlgorithm.HS512, secret)
-//                    .compact();
-//    }
-//
-//
-//	private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {
-//	    return Jwts
-//	            .builder()
-//	            .setClaims(extraClaims)
-//	            .setSubject(userDetails.getUsername())
-//	            .setIssuedAt(new Date(System.currentTimeMillis()))
-//	            .setExpiration(new Date(System.currentTimeMillis() + expiration))
-//	            .signWith(getSignInKey(), SignatureAlgorithm.HS256)
-//	            .compact();
-//	  }
+	private String getHeaderJwt() {
+		return CommonUtil.getRequest().getHeader(JWT_HEADER_KEY);
+	}
 }

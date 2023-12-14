@@ -4,14 +4,64 @@
 <mapper namespace="com.base.react.mapper.sample.SampleMapper">
 
 	<select id="getSampleList" resultType="ResSampleDTO">
+	/* SampleMapper.getSampleList */
 
 		SELECT
-			MSG
-			, USER_NAME
+			'MSG' AS MSG
+			, 'USER_NAME' AS USER_NAME
 
 			, #{camelTestMsg} AS CAMEL_TEST_MSG
 			, #{paramTest} AS PARAM_TEST
-		FROM TEST_WH
+
+	</select>
+
+	<sql id="getIngreInfoListInclude">
+		FROM INGRE_INFO
+		WHERE 1=1
+	</sql>
+
+	<select id="getIngreInfoListCount" resultType="java.lang.Integer">
+	/* SampleMapper. getIngreInfoListCount */
+
+		SELECT COUNT(1)
+		<include refid="getIngreInfoListInclude" />
+
+	</select>
+
+	<select id="getIngreInfoList" resultType="IngreDTO">
+	/* SampleMapper.getIngreInfoList */
+
+		SELECT
+			INGR.INGRE_SEQ
+			, INGR.INGRE_CD
+			, INGR.INGRE_NM
+			, INGR.INGRE_NM_EN
+			, INGR.INGRE_NM_CN
+			, INGR.ALLERGY_YN
+			, INGR.ORIGIN_CD
+			, INGR.CAS_NO
+			, INGR.MIXRE_PURPOSE
+			, INGR.REG_DT
+			, INGR.REG_USER_CD
+		FROM	(
+			SELECT
+				ROW_NUMBER() OVER(ORDER BY INGRE_SEQ DESC) SORT_NUM
+				, INGRE_SEQ
+				, INGRE_CD
+				, INGRE_NM
+				, INGRE_NM_EN
+				, INGRE_NM_CN
+				, ALLERGY_YN
+				, ORIGIN_CD
+				, CAS_NO
+				, MIXRE_PURPOSE
+				, REG_DT
+				, REG_USER_CD
+			<include refid="getIngreInfoListInclude" />
+		) INGR
+		WHERE 1=1
+		AND INGR.SORT_NUM BETWEEN #{startRownum} AND #{endRownum}
+		ORDER BY INGR.SORT_NUM
 
 	</select>
 
